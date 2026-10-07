@@ -1,0 +1,204 @@
+devops@halo:~$ date
+Thu Oct  8 10:31:04 +07 2026
+devops@halo:~$ systemctl status spring-app.service --no-pager -n 3
+o spring-app.service - Spring Boot Application
+     Loaded: loaded (/etc/systemd/system/spring-app.service; enabled; preset: enabled)
+     Active: inactive (dead) since Thu 2026-10-08 10:12:44 +07; 18min ago
+   Duration: 4h 41min 9.318s
+        CPU: 1min 9.402s
+
+Oct 08 10:12:44 halo systemd[1]: spring-app.service: Deactivated successfully.
+Oct 08 10:12:44 halo systemd[1]: Stopped spring-app.service - Spring Boot Application.
+Oct 08 10:12:44 halo systemd[1]: spring-app.service: Consumed 1min 9.402s CPU time.
+devops@halo:~$ sudo ss -tlnp | grep 8082; echo "exit=$?"
+[sudo] password for devops: 
+exit=1
+devops@halo:~$ curl -I http://localhost/api/health
+HTTP/1.1 502 Bad Gateway
+Server: nginx/1.24.0 (Ubuntu)
+Date: Thu, 08 Oct 2026 03:31:49 GMT
+Content-Type: text/html
+Content-Length: 166
+Connection: keep-alive
+devops@halo:~$ python3 --version
+Python 3.12.3
+devops@halo:~$ python3 -m http.server 8082 > /dev/null 2>&1 &
+[1] 24102
+devops@halo:~$ jobs -l
+[1]+ 24102 Running                 python3 -m http.server 8082 > /dev/null 2>&1 &
+devops@halo:~$ curl -I http://127.0.0.1:8082/
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.12.3
+Date: Thu, 08 Oct 2026 03:33:41 GMT
+Content-type: text/html; charset=utf-8
+Content-Length: 1843
+
+devops@halo:~$ curl -I http://localhost/api/health
+HTTP/1.1 404 File not found
+Server: nginx/1.24.0 (Ubuntu)
+Date: Thu, 08 Oct 2026 03:33:58 GMT
+Content-Type: text/html;charset=utf-8
+Content-Length: 335
+Connection: keep-alive
+devops@halo:~$ sudo systemctl start spring-app.service
+devops@halo:~$ systemctl status spring-app.service --no-pager -n 7
+* spring-app.service - Spring Boot Application
+     Loaded: loaded (/etc/systemd/system/spring-app.service; enabled; preset: enabled)
+     Active: activating (auto-restart) (Result: exit-code) since Thu 2026-10-08 10:36:06 +07; 5s ago
+    Process: 24128 ExecStart=/usr/bin/java -jar /opt/spring-app/app.jar (code=exited, status=1/FAILURE)
+   Main PID: 24128 (code=exited, status=1/FAILURE)
+        CPU: 4.108s
+
+Oct 08 10:36:06 halo java[24128]: Description:
+Oct 08 10:36:06 halo java[24128]: Web server failed to start. Port 8082 was already in use.
+Oct 08 10:36:06 halo java[24128]: Action:
+Oct 08 10:36:06 halo java[24128]: Identify and stop the process that's listening on port 8082 or configure this application to listen on another port.
+Oct 08 10:36:06 halo systemd[1]: spring-app.service: Main process exited, code=exited, status=1/FAILURE
+Oct 08 10:36:06 halo systemd[1]: spring-app.service: Failed with result 'exit-code'.
+Oct 08 10:36:06 halo systemd[1]: spring-app.service: Consumed 4.108s CPU time.
+devops@halo:~$ sleep 5; journalctl -u spring-app.service -n 40 --no-pager
+Oct 08 10:12:43 halo systemd[1]: Stopping spring-app.service - Spring Boot Application...
+Oct 08 10:12:43 halo java[23871]: 2026-10-08T10:12:43.207+07:00  INFO 23871 --- [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+Oct 08 10:12:43 halo java[23871]: 2026-10-08T10:12:43.212+07:00  INFO 23871 --- [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+Oct 08 10:12:43 halo java[23871]: 2026-10-08T10:12:43.240+07:00  INFO 23871 --- [ionShutdownHook] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+Oct 08 10:12:44 halo systemd[1]: spring-app.service: Deactivated successfully.
+Oct 08 10:12:44 halo systemd[1]: Stopped spring-app.service - Spring Boot Application.
+Oct 08 10:12:44 halo systemd[1]: spring-app.service: Consumed 1min 9.402s CPU time.
+Oct 08 10:36:02 halo systemd[1]: Started spring-app.service - Spring Boot Application.
+Oct 08 10:36:03 halo java[24128]:   .   ____          _            __ _ _
+Oct 08 10:36:03 halo java[24128]:  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+Oct 08 10:36:03 halo java[24128]: ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+Oct 08 10:36:03 halo java[24128]:  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+Oct 08 10:36:03 halo java[24128]:   '  |____| .__|_| |_|_| |_\__, | / / / /
+Oct 08 10:36:03 halo java[24128]:  =========|_|==============|___/=/_/_/_/
+Oct 08 10:36:03 halo java[24128]:  :: Spring Boot ::                (v3.3.4)
+Oct 08 10:36:03 halo java[24128]: 2026-10-08T10:36:03.318+07:00  INFO 24128 --- [           main] com.example.springapp.SpringApp          : Starting SpringApp v1.0.0 using Java 21.0.4 with PID 24128 (/opt/spring-app/app.jar started by java-runner in /opt/spring-app)
+Oct 08 10:36:03 halo java[24128]: 2026-10-08T10:36:03.325+07:00  INFO 24128 --- [           main] com.example.springapp.SpringApp          : No active profile set, falling back to 1 default profile: "default"
+Oct 08 10:36:04 halo java[24128]: 2026-10-08T10:36:04.012+07:00  INFO 24128 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+Oct 08 10:36:04 halo java[24128]: 2026-10-08T10:36:04.019+07:00  INFO 24128 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+Oct 08 10:36:04 halo java[24128]: 2026-10-08T10:36:04.020+07:00  INFO 24128 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+Oct 08 10:36:04 halo java[24128]: 2026-10-08T10:36:04.071+07:00  INFO 24128 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+Oct 08 10:36:04 halo java[24128]: 2026-10-08T10:36:04.072+07:00  INFO 24128 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 746 ms
+Oct 08 10:36:06 halo java[24128]: 2026-10-08T10:36:06.201+07:00  INFO 24128 --- [           main] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+Oct 08 10:36:06 halo java[24128]: 2026-10-08T10:36:06.209+07:00  WARN 24128 --- [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'; nested exception is org.springframework.boot.web.server.PortInUseException: Port 8082 is already in use
+Oct 08 10:36:06 halo java[24128]: 2026-10-08T10:36:06.223+07:00  INFO 24128 --- [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+Oct 08 10:36:06 halo java[24128]: Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+Oct 08 10:36:06 halo java[24128]: 2026-10-08T10:36:06.236+07:00 ERROR 24128 --- [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+Oct 08 10:36:06 halo java[24128]: ***************************
+Oct 08 10:36:06 halo java[24128]: APPLICATION FAILED TO START
+Oct 08 10:36:06 halo java[24128]: ***************************
+Oct 08 10:36:06 halo java[24128]: Description:
+Oct 08 10:36:06 halo java[24128]: Web server failed to start. Port 8082 was already in use.
+Oct 08 10:36:06 halo java[24128]: Action:
+Oct 08 10:36:06 halo java[24128]: Identify and stop the process that's listening on port 8082 or configure this application to listen on another port.
+Oct 08 10:36:06 halo systemd[1]: spring-app.service: Main process exited, code=exited, status=1/FAILURE
+Oct 08 10:36:06 halo systemd[1]: spring-app.service: Failed with result 'exit-code'.
+Oct 08 10:36:06 halo systemd[1]: spring-app.service: Consumed 4.108s CPU time.
+Oct 08 10:36:16 halo systemd[1]: spring-app.service: Scheduled restart job, restart counter is at 1.
+Oct 08 10:36:16 halo systemd[1]: Stopped spring-app.service - Spring Boot Application.
+Oct 08 10:36:16 halo systemd[1]: Started spring-app.service - Spring Boot Application.
+devops@halo:~$ systemctl show spring-app.service -p Restart,RestartUSec,NRestarts,ActiveState,SubState,StartLimitIntervalUSec,StartLimitBurst
+Restart=on-failure
+RestartUSec=10s
+NRestarts=2
+ActiveState=activating
+SubState=auto-restart
+StartLimitIntervalUSec=5min
+StartLimitBurst=5
+devops@halo:~$ sudo systemctl stop spring-app.service
+devops@halo:~$ systemctl is-active spring-app.service
+inactive
+devops@halo:~$ pgrep -a java; echo "exit=$?"
+exit=1
+devops@halo:~$ sudo ss -tlnp | grep 8082
+LISTEN 0      5            0.0.0.0:8082       0.0.0.0:*    users:(("python3",pid=24102,fd=3))
+devops@halo:~$ sudo lsof -i :8082
+COMMAND   PID   USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
+python3 24102 devops   3u   IPv4  183274      0t0  TCP *:8082 (LISTEN)
+devops@halo:~$ netstat -tlnp | grep 8082
+Command 'netstat' not found, but can be installed with:
+sudo apt install net-tools
+devops@halo:~$ sudo fuser 8082/tcp
+8082/tcp:            24102
+devops@halo:~$ sudo fuser -v 8082/tcp
+                     USER        PID ACCESS COMMAND
+8082/tcp:            devops    24102 F.... python3
+devops@halo:~$ sudo lsof -t -i :8082
+24102
+devops@halo:~$ ps -fp 24102
+UID          PID    PPID  C STIME TTY          TIME CMD
+devops     24102   23996  0 10:33 pts/0    00:00:00 python3 -m http.server 8082
+devops@halo:~$ ps -o pid,ppid,user,etime,cmd -p 24102
+    PID    PPID USER         ELAPSED CMD
+  24102   23996 devops         06:22 python3 -m http.server 8082
+devops@halo:~$ ps -o lstart= -p 24102
+Thu Oct  8 10:33:20 2026
+devops@halo:~$ cat /proc/24102/cmdline | tr '\0' ' '; echo
+python3 -m http.server 8082 
+devops@halo:~$ ls -l /proc/24102/cwd /proc/24102/exe
+lrwxrwxrwx 1 devops devops 0 Oct  8 10:40 /proc/24102/cwd -> /home/devops
+lrwxrwxrwx 1 devops devops 0 Oct  8 10:40 /proc/24102/exe -> /usr/bin/python3.12
+devops@halo:~$ ps -p 23996 -o pid,comm
+    PID COMMAND
+  23996 bash
+devops@halo:~$ kill 24102
+devops@halo:~$ sleep 2
+[1]+  Terminated              python3 -m http.server 8082 > /dev/null 2>&1
+devops@halo:~$ ps -p 24102; echo "exit=$?"
+    PID TTY          TIME CMD
+exit=1
+devops@halo:~$ sudo ss -tlnp | grep 8082; echo "exit=$?"
+exit=1
+devops@halo:~$ jobs -l
+devops@halo:~$ sudo systemctl reset-failed spring-app.service
+devops@halo:~$ sudo systemctl restart spring-app.service
+devops@halo:~$ systemctl status spring-app.service --no-pager -n 3
+* spring-app.service - Spring Boot Application
+     Loaded: loaded (/etc/systemd/system/spring-app.service; enabled; preset: enabled)
+     Active: active (running) since Thu 2026-10-08 10:43:41 +07; 12s ago
+   Main PID: 24250 (java)
+      Tasks: 25 (limit: 4551)
+     Memory: 231.4M (peak: 232.0M)
+        CPU: 5.203s
+     CGroup: /system.slice/spring-app.service
+             `-24250 /usr/bin/java -jar /opt/spring-app/app.jar
+
+Oct 08 10:43:42 halo java[24250]: 2026-10-08T10:43:42.464+07:00  INFO 24250 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 684 ms
+Oct 08 10:43:44 halo java[24250]: 2026-10-08T10:43:44.968+07:00  INFO 24250 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path ''
+Oct 08 10:43:44 halo java[24250]: 2026-10-08T10:43:44.990+07:00  INFO 24250 --- [           main] com.example.springapp.SpringApp          : Started SpringApp in 3.218 seconds (process running for 3.742)
+devops@halo:~$ journalctl -u spring-app.service -n 8 --no-pager
+Oct 08 10:43:41 halo java[24250]: 2026-10-08T10:43:41.779+07:00  INFO 24250 --- [           main] com.example.springapp.SpringApp          : No active profile set, falling back to 1 default profile: "default"
+Oct 08 10:43:42 halo java[24250]: 2026-10-08T10:43:42.401+07:00  INFO 24250 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+Oct 08 10:43:42 halo java[24250]: 2026-10-08T10:43:42.408+07:00  INFO 24250 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+Oct 08 10:43:42 halo java[24250]: 2026-10-08T10:43:42.409+07:00  INFO 24250 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+Oct 08 10:43:42 halo java[24250]: 2026-10-08T10:43:42.463+07:00  INFO 24250 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+Oct 08 10:43:42 halo java[24250]: 2026-10-08T10:43:42.464+07:00  INFO 24250 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 684 ms
+Oct 08 10:43:44 halo java[24250]: 2026-10-08T10:43:44.968+07:00  INFO 24250 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path ''
+Oct 08 10:43:44 halo java[24250]: 2026-10-08T10:43:44.990+07:00  INFO 24250 --- [           main] com.example.springapp.SpringApp          : Started SpringApp in 3.218 seconds (process running for 3.742)
+devops@halo:~$ sudo ss -tlnp | grep 8082
+LISTEN 0      100        127.0.0.1:8082       0.0.0.0:*    users:(("java",pid=24250,fd=14))
+devops@halo:~$ sudo lsof -i :8082
+COMMAND   PID        USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
+java    24250 java-runner  14u   IPv4  191377      0t0  TCP localhost:8082 (LISTEN)
+devops@halo:~$ ps -fp 24250
+UID          PID    PPID  C STIME TTY          TIME CMD
+java-ru+   24250       1  8 10:43 ?        00:00:06 /usr/bin/java -jar /opt/spring-app/app.jar
+devops@halo:~$ curl -s http://127.0.0.1:8082/health; echo
+{"status":"UP","app":"spring-app","version":"1.0.0"}
+devops@halo:~$ curl -sI http://127.0.0.1:8082/health
+HTTP/1.1 200 
+Content-Type: application/json
+Content-Length: 52
+Date: Thu, 08 Oct 2026 03:44:58 GMT
+
+devops@halo:~$ curl -I http://localhost/api/health
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Thu, 08 Oct 2026 03:45:36 GMT
+Content-Type: application/json
+Content-Length: 52
+Connection: keep-alive
+
+devops@halo:~$ date
+Thu Oct  8 10:45:51 +07 2026
+devops@halo:~$ 
